@@ -1,8 +1,9 @@
+import subprocess
 import os
 import shutil
 import sys
-import threading
 import time
+import argparse
 
 import requests
 from win10toast import ToastNotifier
@@ -30,69 +31,68 @@ def get_and_unzip(url: str, dest: str):
     shutil.unpack_archive('.\\tmp\\tmp_file.zip', dest)
     os.remove('.\\tmp\\tmp_file.zip')
 
-def run_command_threaded(command: str):
-    threading.Thread(
-        target=lambda: os.system(f'start /wait {command}'),
-        daemon=True
-    ).start()
+def run_in_context(func, contextDirectory: str):
+    os.chdir(contextDirectory)
+    func()
+    os.chdir('..')
+
+def run_command_process(command: str):
+    subprocess.Popen(f'start /wait {command}', shell=True)
 
 def setup_newegg():
-    request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
-    f = open('config.json', 'w')
-    # TODO: Change in future
-    f.write("""
-{
-	"email":"email@email.com",
-	"password":"supercoolpassword",
-	"cv2":"123",
-	"refresh_time":"5",
-	"item_number":"N82E16814137595,N82E16814126455",
-	"auto_submit":"true",
-	"price_limit":"800"
-}
-    """)
-    f.close()
+    def setup():
+        request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
+        f = open('config.json', 'w')
+        # TODO: Change in future
+        f.write("""
+        {
+            "email":"email@email.com",
+            "password":"supercoolpassword",
+            "cv2":"123",
+            "refresh_time":"5",
+            "item_number":"N82E16814137595,N82E16814126455",
+            "auto_submit":"true",
+            "price_limit":"800"
+        }
+        """)
+        f.close()
 
-    run_command_threaded('node newegg_bot.js')
+    run_in_context(setup, absPath)
 
 def setup_fairgame():
     # * Get fairgame bot
     create_folder('fairgame-0.6.5')
     get_and_unzip('https://github.com/Hari-Nagarajan/fairgame/archive/refs/tags/0.6.5.zip', '.')
 
-    os.chdir('fairgame-0.6.5')
+    def setup():
+        # * Setup pipenv
+        os.system('py -3.8 -m pip install pipenv')
+        os.system('py -3.8 -m pipenv install')
 
-    # * Setup pipenv
-    os.system('py -3.8 -m pip install pipenv')
-    os.system('py -3.8 -m pipenv install')
+        # * Modify settings
+        f = open('.\\config\\amazon_config.json', 'w')
+        f.write(amazonConfig)
+        f.close()
 
-    # * Modify settings
-    f = open('.\\config\\amazon_config.json', 'w')
-    f.write(amazonConfig)
-    f.close()
+        os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
 
-    os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
-
-    toast(
-        'Setup is running the Amazon bot',
-        'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
-    )
-
-    # ? Run fairgame bot in thread
-    run_command_threaded('py -3.8 -m pipenv run py app.py amazon')
-
-    os.chdir('..')
+    run_in_context(setup, f'{absPath}\\fairgame-0.6.5')
 
 def setup_evga():
     request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
     create_folder('webdrivers')
     get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.\\webdrivers')
 
-def windows_workflow():
-    print('WARNING: Do NOT use this config with a normal credit card, instead, one should opt for a virtual private card WITH spending limits (otherwise some of the bots might end up buying cards at exorbitant prices)\nInsert \'ok\' and press [ENTER] to continue (Note: If you want to exit at any time, press CTRL + C)')
-    if input(' > ') != 'ok':
-        quit()
+def run_bots():
+    run_command_process('node newegg_bot.js')
 
+    toast(
+        'Setup is running the Amazon bot',
+        'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
+    )
+    run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon'), 'fairgame-0.6.5')
+
+def windows_workflow():
     create_folder("tmp")
 
     # ? Get NodeJS and packages
@@ -115,21 +115,29 @@ def windows_workflow():
     os.system('py -3.8 -m pip install selenium')
 
     # ? Setup bots
-    # setup_fairgame()
+    setup_fairgame()
     setup_newegg()
 
-    print('Waiting...')
-    while True:
-        pass
+    run_bots()
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Sets up and runs a bunch of different bots')
+    parser.add_argument('--run', action='store_true', help='Runs the bots without setup')
+    args = parser.parse_args()
+
+    print('WARNING: Do NOT use this config with a normal credit card, instead, one should opt for a virtual private card WITH spending limits (otherwise some of the bots might end up buying cards at exorbitant prices)\nInsert \'ok\' and press [ENTER] to continue (Note: If you want to exit at any time, press CTRL + C)')
+    if input(' > ') != 'ok':
+        quit()
+
     absPath = os.path.dirname(os.path.abspath(__file__))
-    print(absPath)
     amazonConfig = open('amazon_config.json', 'r').read()
 
     if os.name == 'nt':
         toaster = ToastNotifier()
 
-        windows_workflow()
+        if args.run:
+            run_bots()
+        else:
+            windows_workflow()
     else:
         print('Currently only Windows is supported!')
