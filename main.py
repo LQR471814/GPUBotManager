@@ -9,14 +9,15 @@ import requests
 from win10toast import ToastNotifier
 
 
+# ? Utility functions
 def toast(title: str, message: str):
     toaster.show_toast(title, message, duration=10, threaded=True)
 
 def refresh_path():
     os.system(f'{absPath}\\refreshenv.cmd')
 
-def create_folder(name: str):
-    if os.path.isdir(name):
+def create_folder(name: str, keep: bool = False):
+    if os.path.isdir(name) and not keep:
         shutil.rmtree(name)
     os.mkdir(name)
 
@@ -39,6 +40,7 @@ def run_in_context(func, contextDirectory: str):
 def run_command_process(command: str):
     subprocess.Popen(f'start /wait {command}', shell=True)
 
+# ? Setup functions
 def setup_newegg():
     def setup():
         request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
@@ -59,7 +61,7 @@ def setup_newegg():
 
     run_in_context(setup, absPath)
 
-def setup_fairgame():
+def setup_amazon():
     # * Get fairgame bot
     create_folder('fairgame-0.6.5')
     get_and_unzip('https://github.com/Hari-Nagarajan/fairgame/archive/refs/tags/0.6.5.zip', '.')
@@ -79,18 +81,33 @@ def setup_fairgame():
     run_in_context(setup, f'{absPath}\\fairgame-0.6.5')
 
 def setup_evga():
-    request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
-    create_folder('webdrivers')
-    get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.\\webdrivers')
+    def setup():
+        request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
+        create_folder('webdrivers')
+        get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.\\webdrivers')
+
+    run_in_context(setup, absPath)
+
+def setup_bestbuy():
+    def setup():
+        get_and_unzip('https://github.com/alexxsalazar/Nvidia3080_BB_bot/archive/refs/heads/master.zip', '.')
+
+    run_in_context(setup, absPath)
+
+# ? Bot functions
+def startup_warning():
+    print('WARNING: Do NOT use this config with a normal credit card, instead, one should opt for a virtual private card WITH spending limits (otherwise some of the bots might end up buying cards at exorbitant prices)\nInsert \'ok\' and press [ENTER] to continue (Note: If you want to exit at any time, press CTRL + C)')
+    if input(' > ') != 'ok':
+        quit()
 
 def run_bots():
-    run_command_process('node newegg_bot.js')
+    run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
 
     toast(
         'Setup is running the Amazon bot',
         'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
     )
-    run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon'), 'fairgame-0.6.5')
+    run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon'), f'{absPath}\\fairgame-0.6.5')
 
 def windows_workflow():
     create_folder("tmp")
@@ -115,7 +132,7 @@ def windows_workflow():
     os.system('py -3.8 -m pip install selenium')
 
     # ? Setup bots
-    setup_fairgame()
+    setup_amazon()
     setup_newegg()
 
     run_bots()
@@ -125,9 +142,7 @@ if __name__ == '__main__':
     parser.add_argument('--run', action='store_true', help='Runs the bots without setup')
     args = parser.parse_args()
 
-    print('WARNING: Do NOT use this config with a normal credit card, instead, one should opt for a virtual private card WITH spending limits (otherwise some of the bots might end up buying cards at exorbitant prices)\nInsert \'ok\' and press [ENTER] to continue (Note: If you want to exit at any time, press CTRL + C)')
-    if input(' > ') != 'ok':
-        quit()
+    startup_warning()
 
     absPath = os.path.dirname(os.path.abspath(__file__))
     amazonConfig = open('amazon_config.json', 'r').read()
