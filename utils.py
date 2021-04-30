@@ -1,6 +1,7 @@
 import os
 import shutil
 from subprocess import Popen, PIPE, STDOUT
+import time
 from typing import List, Union
 
 import pyautogui
@@ -44,3 +45,4 @@ def run_command_process(command: Union[str, List[str]], shell=True) -> Popen:
 def insert_command(keys: str):
     pyautogui.write(keys)
     pyautogui.press('enter')
+    time.sleep(0.5)

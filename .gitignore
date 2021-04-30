@@ -1,6 +1,7 @@
 # Misc
 __pycache__
 tmp
+geckodriver.log
 
 # Bots
 fairgame-0.6.5

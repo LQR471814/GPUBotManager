@@ -99,6 +99,8 @@ def run_bots(setup = False):
     run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
     #* EVGA
     run_in_context(lambda: run_command_process('py evga_bot.py'), absPath)
+    time.sleep(1)
+    insert_command('RTX 3080 FTW3 GAMING')
 
 # ? Config
 def setup_universal_config():
