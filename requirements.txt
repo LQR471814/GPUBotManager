@@ -1,0 +1,3 @@
+PyAutoGUI==0.9.52
+win10toast==0.9
+requests==2.25.1

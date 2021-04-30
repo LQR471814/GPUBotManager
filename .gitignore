@@ -1,7 +1,17 @@
+# Misc
+__pycache__
 tmp
+
+# Bots
 fairgame-0.6.5
-webdrivers
 evga_bot.py
-node-v14.16.1-win-x64
 newegg_bot.js
+
+# Node
+webdrivers
+node-v14.16.1-win-x64
+
+# Configuration
 config.json
+evga.key
+payment.key
