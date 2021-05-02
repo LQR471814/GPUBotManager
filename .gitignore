@@ -3,11 +3,14 @@ __pycache__
 tmp
 geckodriver.log
 SETUP_FINISHED
+Pipfile
+*.lock
 
 # Bots
 fairgame-master
 evga_bot.py
 newegg_bot.js
+Nvidia3080_BB_bot-master
 
 # Node
 geckodriver.exe

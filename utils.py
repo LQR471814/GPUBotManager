@@ -36,6 +36,11 @@ def run_in_context(func, contextDirectory: str):
     os.chdir('..')
     return result
 
+def in_folder(directory: str):
+    def wrapper(func):
+        run_in_context(func(), directory)
+    return wrapper
+
 def run_command_process(command: Union[str, List[str]], shell=True) -> Popen:
     if shell:
         proc = Popen('start /wait ' + command, shell=True)

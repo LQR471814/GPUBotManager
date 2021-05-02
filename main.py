@@ -1,42 +1,44 @@
-import argparse
 import json
 import os
-import sys
 import time
 
 from win10toast import ToastNotifier
 
+import get_bestbuy_cookie as BBCookie
 from shared_context import *
 from utils import *
 
+
+amazon_repo_name = 'fairgame-master'
+bestbuy_repo_name = 'Nvidia3080_BB_bot-master'
+
+pseudo_fname = 'Royston'
+pseudo_lname = 'Waller'
 
 def toast(title: str, message: str):
     toaster.show_toast(title, message, duration=10, threaded=True)
 
 # ? Setup functions
 def setup_newegg():
-    def setup():
-        request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
-        f = open('config.json', 'w')
-        # TODO: Change in future
-        f.write(
-            json.dumps({
-                "email": setup_config['email'],
-                "password": setup_config['password'],
-                "cv2": setup_config['cvv'],
-                "refresh_time": "5",
-                "item_number": "N82E16814137595,N82E16814126455",
-                "auto_submit": "true",
-                "price_limit": setup_config['price_limit']
-            })
-        )
-        f.close()
-
-    run_in_context(setup, absPath)
+    request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
+    f = open('config.json', 'w')
+    # TODO: Change in future
+    f.write(
+        json.dumps({
+            "email": setup_config['email'],
+            "password": setup_config['password'],
+            "cv2": setup_config['card_cvv'],
+            "refresh_time": "5",
+            "item_number": "N82E16814137595,N82E16814126455",
+            "auto_submit": "true",
+            "price_limit": setup_config['price_limit']
+        })
+    )
+    f.close()
 
 def setup_amazon():
     # * Get fairgame bot
-    create_folder('fairgame-master')
+    create_folder(amazon_repo_name)
     get_and_unzip('https://github.com/Hari-Nagarajan/fairgame/archive/refs/heads/master.zip', '.')
 
     def setup():
@@ -52,23 +54,75 @@ def setup_amazon():
 
         os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
 
-    run_in_context(setup, f'{absPath}\\fairgame-master')
+    run_in_context(setup, f'{absPath}\\{amazon_repo_name}')
 
 def setup_evga():
-    def setup():
-        with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
-        with open('payment.key', 'w') as f: f.write(f"{setup_config['card_holder_name']}\n{setup_config['password']}\n{setup_config['cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
+    with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
+    with open('payment.key', 'w') as f: f.write(f"{pseudo_fname} {pseudo_lname}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
-        request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
-        get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
-
-    run_in_context(setup, absPath)
+    request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
+    get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
 
 def setup_bestbuy():
     def setup():
-        get_and_unzip('https://github.com/alexxsalazar/Nvidia3080_BB_bot/archive/refs/heads/master.zip', '.')
+        with open('.\\data\\sensor_data_cookie.txt', 'w') as f: f.write(cookie)
+        with open('.\\data\\tasks.json', 'w') as f:
+            linksObj = []
+            for i in range(len(bestbuy_links)):
+                linksObj.append(
+                    {
+                        'task_id': str(i + 1),
+                        'site': 'Bestbuy',
+                        'product': bestbuy_links[i],
+                        'profile': 'BotManager',
+                        'proxies': 'None',
+                        'monitor_delay': '5.0',
+                        'error_delay': '5.0',
+                        'max_price': '750'
+                    }
+                )
+            f.write(json.dumps(linksObj))
+        with open('.\\data\\profiles.json', 'w') as f:
+            profilesObj = []
+            profilesObj.append({
+                'profile_name': 'BotManager',
+                'shipping_fname': pseudo_fname, #? Shipping info
+                'shipping_lname': pseudo_lname,
+                'shipping_email': setup_config['email'],
+                'shipping_phone': setup_config['phone_number'],
+                'shipping_a1': setup_config['shipping_address'],
+                'shipping_a2': setup_config['shipping_address'],
+                'shipping_city': setup_config['shipping_city'],
+                'shipping_zipcode': setup_config['shipping_zip'],
+                'shipping_state': setup_config['shipping_state'],
+                'shipping_county': setup_config['shipping_county'],
+                'billing_fname': pseudo_fname, #? Billing info (same as shipping info)
+                'billing_lname': pseudo_lname,
+                'billing_email': setup_config['email'],
+                'billing_phone': setup_config['phone_number'],
+                'billing_a1': setup_config['shipping_address'],
+                'billing_a2': setup_config['shipping_address'],
+                'billing_city': setup_config['shipping_city'],
+                'billing_zipcode': setup_config['shipping_zip'],
+                'billing_state': setup_config['shipping_state'],
+                'billing_county': setup_config['shipping_county'],
+                'card_number': setup_config['card_number'], #? Card info
+                'card_month': setup_config['card_expiration_month'],
+                'card_year': setup_config['card_expiration_year'],
+                'card_type': setup_config['card_expiration_year'],
+                'card_cvv': setup_config['card_cvv'],
+            })
+            f.write(json.dumps(profilesObj))
 
-    run_in_context(setup, absPath)
+        run_command_process('py -3.8 -m pip install -r requirements.txt')
+
+    bestbuy_links = open('bestbuy_rtx_links', 'r').read().split('\n')
+
+    create_folder(bestbuy_repo_name)
+    get_and_unzip('https://github.com/alexxsalazar/Nvidia3080_BB_bot/archive/refs/heads/master.zip', '.')
+
+    cookie = BBCookie.main(setup_config['email'], setup_config['password'])
+    run_in_context(setup, f'{absPath}\\{bestbuy_repo_name}')
 
 # ? Bot functions
 def startup_warning():
@@ -83,7 +137,7 @@ def run_bots(setup = False):
         'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
     )
 
-    amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), absPath + "\\fairgame-master")
+    amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), f'{absPath}\\{amazon_repo_name}')
 
     if setup:
         insert_line_to_process(amazonBotProc, setup_config['email'])
@@ -95,19 +149,26 @@ def run_bots(setup = False):
     #* Newegg
     run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
     #* EVGA
-    evgaBotProc = run_in_context(lambda: run_command_process('py evga_bot.py', shell=False), absPath)
+    evgaBotProc = run_in_context(lambda: run_command_process('py -3.8 evga_bot.py', shell=False), absPath)
     insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
+    #* Best Buy
+    run_in_context(lambda: run_command_process('py -3.8 app.py'), f'{absPath}\\{bestbuy_repo_name}')
 
 # ? Config
 def setup_universal_config():
     config_keys = [
         'email', #? Bot should have the same email and password for each site
         'password',
-        'card_holder_name', #? Use a virtual credit card
+        'phone_number',
+        'shipping_address',
+        'shipping_city',
+        'shipping_zip',
+        'shipping_state',
+        'shipping_county',
         'card_number',
         'card_expiration_month',
         'card_expiration_year',
-        'cvv', #? The 3 digits number on the back of a credit card
+        'card_cvv', #? The 3 digits number on the back of a credit card
         'price_limit' #? Max expense for a card
     ]
     config = {}
@@ -150,9 +211,10 @@ def windows_workflow():
     setup_python()
 
     # ? Setup bots
-    setup_amazon()
-    setup_newegg()
-    setup_evga()
+    run_in_context(setup_amazon, absPath)
+    run_in_context(setup_newegg, absPath)
+    run_in_context(setup_amazon, absPath)
+    run_in_context(setup_bestbuy, absPath)
 
     run_bots(True)
 
