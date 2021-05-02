@@ -36,8 +36,8 @@ def setup_newegg():
 
 def setup_amazon():
     # * Get fairgame bot
-    create_folder('fairgame-0.6.5')
-    get_and_unzip('https://github.com/Hari-Nagarajan/fairgame/archive/refs/tags/0.6.5.zip', '.')
+    create_folder('fairgame-master')
+    get_and_unzip('https://github.com/Hari-Nagarajan/fairgame/archive/refs/heads/master.zip', '.')
 
     def setup():
         # * Setup pipenv
@@ -52,7 +52,7 @@ def setup_amazon():
 
         os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
 
-    run_in_context(setup, f'{absPath}\\fairgame-0.6.5')
+    run_in_context(setup, f'{absPath}\\fairgame-master')
 
 def setup_evga():
     def setup():
@@ -60,8 +60,7 @@ def setup_evga():
         with open('payment.key', 'w') as f: f.write(f"{setup_config['card_holder_name']}\n{setup_config['password']}\n{setup_config['cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
         request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
-        create_folder('webdrivers')
-        get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.\\webdrivers')
+        get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
 
     run_in_context(setup, absPath)
 
@@ -84,23 +83,20 @@ def run_bots(setup = False):
         'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
     )
 
-    run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon'), absPath + "\\fairgame-0.6.5")
-
-    time.sleep(1)
+    amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), absPath + "\\fairgame-master")
 
     if setup:
-        insert_command(setup_config['email'])
-        insert_command(setup_config['password'])
-        insert_command('test_pass')
+        insert_line_to_process(amazonBotProc, setup_config['email'])
+        insert_line_to_process(amazonBotProc, setup_config['password'])
+        insert_line_to_process(amazonBotProc, 'test_pass')
 
-    insert_command('test_pass')
+    insert_line_to_process(amazonBotProc, 'test_pass')
 
     #* Newegg
     run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
     #* EVGA
-    run_in_context(lambda: run_command_process('py evga_bot.py'), absPath)
-    time.sleep(1)
-    insert_command('RTX 3080 FTW3 GAMING')
+    evgaBotProc = run_in_context(lambda: run_command_process('py evga_bot.py', shell=False), absPath)
+    insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
 
 # ? Config
 def setup_universal_config():
@@ -144,7 +140,6 @@ def setup_python():
 
     # * Refresh and modify path
     refresh_path()
-    sys.path.append(f"{absPath}\\webdrivers\\")
 
     os.system('py -3.8 -m pip install selenium')
 
@@ -163,23 +158,22 @@ def windows_workflow():
 
 if __name__ == '__main__':
     # ? Handle runtime args
-    parser = argparse.ArgumentParser(description='Sets up and runs a bunch of different bots')
-    parser.add_argument('--run', action='store_true', help='Runs the bots without setup')
-    args = parser.parse_args()
-
     toaster = ToastNotifier()
 
     # ? Show startup warning
     startup_warning()
 
+    setup = not os.path.isfile(f'{absPath}\\SETUP_FINISHED')
+
     # ? On setup (not run)
-    if not args.run:
+    if setup:
         setup_config = setup_universal_config()
 
     if os.name == 'nt':
-        if args.run: # ? On run
-            run_bots()
-        else: # ? On setup
+        if setup:
             windows_workflow()
+            run_in_context(lambda: open('SETUP_FINISHED', 'w').close(), absPath)
+        else:
+            run_bots()
     else:
         print('Currently only Windows is supported!')

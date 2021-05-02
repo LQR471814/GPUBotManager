@@ -1,0 +1,6 @@
+x = input(' > ')
+print(x.upper())
+x = input(' > ')
+print(x.upper())
+x = input(' > ')
+print(x.upper())

@@ -1,10 +1,10 @@
 import os
 import shutil
-from subprocess import Popen, PIPE, STDOUT
-import time
+import subprocess
+import threading
+from subprocess import PIPE, STDOUT, Popen
 from typing import List, Union
 
-import pyautogui
 import requests
 
 from shared_context import *
@@ -38,11 +38,21 @@ def run_in_context(func, contextDirectory: str):
 
 def run_command_process(command: Union[str, List[str]], shell=True) -> Popen:
     if shell:
-        return Popen('start /wait ' + command, shell=True)
+        proc = Popen('start /wait ' + command, shell=True)
     else:
-        return Popen(['start', '/K'] + command, stdout=PIPE, stdin=PIPE, stderr=STDOUT, text=True)
+        proc = Popen(command, stdin=PIPE)
+    return proc
 
-def insert_command(keys: str):
-    pyautogui.write(keys)
-    pyautogui.press('enter')
-    time.sleep(0.5)
+def spawn_process_readline_thread(p: subprocess.Popen):
+    def readline_worker():
+        while True:
+            out: bytes = p.stdout.readline()
+            p.stdout.flush()
+            print(out.decode('utf8'), end='')
+
+    threading.Thread(target=readline_worker, daemon=True).start()
+
+def insert_line_to_process(p: subprocess.Popen, stdin: str) -> str:
+    p.stdin.write(f'{stdin}\n'.encode('utf8'))
+    p.stdin.flush()
+    print('inserted')

@@ -2,14 +2,15 @@
 __pycache__
 tmp
 geckodriver.log
+SETUP_FINISHED
 
 # Bots
-fairgame-0.6.5
+fairgame-master
 evga_bot.py
 newegg_bot.js
 
 # Node
-webdrivers
+geckodriver.exe
 node-v14.16.1-win-x64
 
 # Configuration
