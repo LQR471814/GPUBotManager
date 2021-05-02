@@ -25,6 +25,3 @@ def main(user: str, password: str) -> str:
 
     browser.quit()
     return cookie['_abck']
-
-if __name__ == '__main__':
-    print(main('whydoiexist3812@gmail.com', 'UgeTpi4:kj2e:Dn'))

@@ -12,9 +12,6 @@ from utils import *
 amazon_repo_name = 'fairgame-master'
 bestbuy_repo_name = 'Nvidia3080_BB_bot-master'
 
-pseudo_fname = 'Royston'
-pseudo_lname = 'Waller'
-
 def toast(title: str, message: str):
     toaster.show_toast(title, message, duration=10, threaded=True)
 
@@ -58,7 +55,7 @@ def setup_amazon():
 
 def setup_evga():
     with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
-    with open('payment.key', 'w') as f: f.write(f"{pseudo_fname} {pseudo_lname}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
+    with open('payment.key', 'w') as f: f.write(f"{setup_config['firstname']} {setup_config['lastname']}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
     request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
     get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
@@ -86,8 +83,8 @@ def setup_bestbuy():
             profilesObj = []
             profilesObj.append({
                 'profile_name': 'BotManager',
-                'shipping_fname': pseudo_fname, #? Shipping info
-                'shipping_lname': pseudo_lname,
+                'shipping_fname': setup_config['firstname'], #? Shipping info
+                'shipping_lname': setup_config['lastname'],
                 'shipping_email': setup_config['email'],
                 'shipping_phone': setup_config['phone_number'],
                 'shipping_a1': setup_config['shipping_address'],
@@ -96,8 +93,8 @@ def setup_bestbuy():
                 'shipping_zipcode': setup_config['shipping_zip'],
                 'shipping_state': setup_config['shipping_state'],
                 'shipping_county': setup_config['shipping_county'],
-                'billing_fname': pseudo_fname, #? Billing info (same as shipping info)
-                'billing_lname': pseudo_lname,
+                'billing_fname': setup_config['firstname'], #? Billing info (same as shipping info)
+                'billing_lname': setup_config['lastname'],
                 'billing_email': setup_config['email'],
                 'billing_phone': setup_config['phone_number'],
                 'billing_a1': setup_config['shipping_address'],
@@ -159,6 +156,8 @@ def setup_universal_config():
     config_keys = [
         'email', #? Bot should have the same email and password for each site
         'password',
+        'firstname',
+        'lastname',
         'phone_number',
         'shipping_address',
         'shipping_city',
