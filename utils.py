@@ -60,4 +60,3 @@ def spawn_process_readline_thread(p: subprocess.Popen):
 def insert_line_to_process(p: subprocess.Popen, stdin: str) -> str:
     p.stdin.write(f'{stdin}\n'.encode('utf8'))
     p.stdin.flush()
-    print('inserted')

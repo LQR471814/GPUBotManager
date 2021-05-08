@@ -1,13 +1,14 @@
 import json
 import os
 import time
+import keyboard
 
 from win10toast import ToastNotifier
 
+import evga_bot
 import get_bestbuy_cookie as BBCookie
 from shared_context import *
 from utils import *
-
 
 amazon_repo_name = 'fairgame-master'
 bestbuy_repo_name = 'Nvidia3080_BB_bot-master'
@@ -57,7 +58,7 @@ def setup_evga():
     with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
     with open('payment.key', 'w') as f: f.write(f"{setup_config['firstname']} {setup_config['lastname']}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
-    request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
+    # request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
     get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
 
 def setup_bestbuy():
@@ -129,31 +130,39 @@ def startup_warning():
 
 def run_bots(setup = False):
     #* Amazon
-    toast(
-        'Setup is running the Amazon bot',
-        'Amazon ID = Your Amazon Account\'s email address\nCredential File Password = A separate password to encrypt your password and ID (make sure to remember it)'
-    )
+    def run_amazon():
+        amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), f'{absPath}\\{amazon_repo_name}')
 
-    amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), f'{absPath}\\{amazon_repo_name}')
+        if setup:
+            insert_line_to_process(amazonBotProc, setup_config['email'])
+            keyboard.write(setup_config['password'] + '\n')
+            keyboard.write('test_pass\n')
 
-    if setup:
-        insert_line_to_process(amazonBotProc, setup_config['email'])
-        insert_line_to_process(amazonBotProc, setup_config['password'])
-        insert_line_to_process(amazonBotProc, 'test_pass')
-
-    insert_line_to_process(amazonBotProc, 'test_pass')
+        keyboard.write('test_pass\n')
 
     #* Newegg
-    run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
+    def run_newegg():
+        run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
+
     #* EVGA
-    evgaBotProc = run_in_context(lambda: run_command_process('py -3.8 evga_bot.py', shell=False), absPath)
-    insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
+    def run_evga():
+        # evgaBotProc = run_in_context(lambda: run_command_process('py -3.8 evga_bot.py', shell=False), absPath)
+        # insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
+        evga_bot.main([])
+
     #* Best Buy
-    run_in_context(lambda: run_command_process('py -3.8 app.py'), f'{absPath}\\{bestbuy_repo_name}')
+    def run_bestbuy():
+        run_in_context(lambda: run_command_process('py -3.8 app.py'), f'{absPath}\\{bestbuy_repo_name}')
+
+    run_amazon()
+    # run_newegg()
+    # run_bestbuy()
+
+    while True: pass
 
 # ? Config
 def setup_universal_config():
-    config_keys = [
+    config = dict.fromkeys([
         'email', #? Bot should have the same email and password for each site
         'password',
         'firstname',
@@ -169,10 +178,9 @@ def setup_universal_config():
         'card_expiration_year',
         'card_cvv', #? The 3 digits number on the back of a credit card
         'price_limit' #? Max expense for a card
-    ]
-    config = {}
+    ])
 
-    for key in config_keys:
+    for key in config:
         inp = input(f'{key}: ')
         config[key] = inp
 
@@ -206,14 +214,15 @@ def setup_python():
 def windows_workflow():
     create_folder("tmp")
 
-    setup_node()
-    setup_python()
+    # setup_node()
+    # setup_python()
 
     # ? Setup bots
-    run_in_context(setup_amazon, absPath)
+    # run_in_context(setup_amazon, absPath)
     run_in_context(setup_newegg, absPath)
-    run_in_context(setup_amazon, absPath)
     run_in_context(setup_bestbuy, absPath)
+
+    run_in_context(lambda: open('SETUP_FINISHED', 'w').close(), absPath)
 
     run_bots(True)
 
@@ -225,15 +234,33 @@ if __name__ == '__main__':
     startup_warning()
 
     setup = not os.path.isfile(f'{absPath}\\SETUP_FINISHED')
+    cfg_test = os.path.isfile(f'{absPath}\\USE_TEST_CONFIG')
 
-    # ? On setup (not run)
-    if setup:
+    # ? On setup (and not test)
+    if setup and not cfg_test:
         setup_config = setup_universal_config()
+    else: # ? On test
+        setup_config = {
+            'email': 'whydoiexist3812@gmail.com',
+            'password': '3z8QV&/_.)AjpQU',
+            'firstname': 'Test',
+            'lastname': 'User',
+            'phone_number': '6692348106',
+            'shipping_address': 'address',
+            'shipping_city': 'city',
+            'shipping_zip': 'zip',
+            'shipping_state': 'state',
+            'shipping_county': 'county',
+            'card_number': '123456789',
+            'card_expiration_month': 'June',
+            'card_expiration_year': '2021',
+            'card_cvv': '321',
+            'price_limit': '750',
+        }
 
     if os.name == 'nt':
         if setup:
             windows_workflow()
-            run_in_context(lambda: open('SETUP_FINISHED', 'w').close(), absPath)
         else:
             run_bots()
     else:

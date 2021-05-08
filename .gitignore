@@ -8,7 +8,6 @@ Pipfile
 
 # Bots
 fairgame-master
-evga_bot.py
 newegg_bot.js
 Nvidia3080_BB_bot-master
 
