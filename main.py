@@ -59,7 +59,6 @@ def setup_evga():
     with open('payment.key', 'w') as f: f.write(f"{setup_config['firstname']} {setup_config['lastname']}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
     # request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
-    get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
 
 def setup_bestbuy():
     def setup():
@@ -155,8 +154,10 @@ def run_bots(setup = False):
         run_in_context(lambda: run_command_process('py -3.8 app.py'), f'{absPath}\\{bestbuy_repo_name}')
 
     run_amazon()
-    # run_newegg()
-    # run_bestbuy()
+    time.sleep(7)
+    run_bestbuy()
+
+    print('Press CTRL + C to stop')
 
     while True: pass
 
@@ -186,6 +187,10 @@ def setup_universal_config():
 
     return config
 
+# ? Webdrivers
+def setup_webdrivers():
+    get_and_unzip('https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckodriver-v0.29.1-win64.zip', '.')
+
 # ? Languages
 # * Get NodeJS and packages
 def setup_node():
@@ -214,12 +219,12 @@ def setup_python():
 def windows_workflow():
     create_folder("tmp")
 
-    # setup_node()
-    # setup_python()
+    setup_node()
+    setup_python()
+    setup_webdrivers()
 
     # ? Setup bots
-    # run_in_context(setup_amazon, absPath)
-    run_in_context(setup_newegg, absPath)
+    run_in_context(setup_amazon, absPath)
     run_in_context(setup_bestbuy, absPath)
 
     run_in_context(lambda: open('SETUP_FINISHED', 'w').close(), absPath)

@@ -3,6 +3,7 @@ __pycache__
 tmp
 geckodriver.log
 SETUP_FINISHED
+USE_TEST_CONFIG
 Pipfile
 *.lock
 
