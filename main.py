@@ -3,8 +3,6 @@ import os
 import time
 import keyboard
 
-# import win10toast
-
 import get_bestbuy_cookie as BBCookie
 from shared_context import *
 from utils import *
@@ -12,26 +10,29 @@ from utils import *
 amazon_repo_name = 'fairgame-master'
 bestbuy_repo_name = 'Nvidia3080_BB_bot-master'
 
-# def toast(title: str, message: str):
-#     toaster.show_toast(title, message, duration=10, threaded=True)
+# def setup_evga():
+#     with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
+#     with open('payment.key', 'w') as f: f.write(f"{setup_config['firstname']} {setup_config['lastname']}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
 
-# ? Setup functions
-def setup_newegg():
-    request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
-    f = open('config.json', 'w')
-    # TODO: Change in future
-    f.write(
-        json.dumps({
-            "email": setup_config['email'],
-            "password": setup_config['password'],
-            "cv2": setup_config['card_cvv'],
-            "refresh_time": "5",
-            "item_number": "N82E16814137595,N82E16814126455",
-            "auto_submit": "true",
-            "price_limit": setup_config['price_limit']
-        })
-    )
-    f.close()
+    # request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
+
+# # ? Setup functions
+# def setup_newegg():
+#     request_and_write('https://raw.githubusercontent.com/Ataraksia/NeweggBot/master/NeweggBot.js', '.\\newegg_bot.js')
+#     f = open('config.json', 'w')
+#     # TODO: Change in future
+#     f.write(
+#         json.dumps({
+#             "email": setup_config['email'],
+#             "password": setup_config['password'],
+#             "cv2": setup_config['card_cvv'],
+#             "refresh_time": "5",
+#             "item_number": "N82E16814137595,N82E16814126455",
+#             "auto_submit": "true",
+#             "price_limit": setup_config['price_limit']
+#         })
+#     )
+#     f.close()
 
 def setup_amazon():
     # * Get fairgame bot
@@ -51,12 +52,6 @@ def setup_amazon():
         os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
 
     run_in_context(setup, f'.\\{amazon_repo_name}')
-
-def setup_evga():
-    with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
-    with open('payment.key', 'w') as f: f.write(f"{setup_config['firstname']} {setup_config['lastname']}\n{setup_config['password']}\n{setup_config['card_cvv']}\n{setup_config['card_expiration_month']}\n{setup_config['card_expiration_year']}")
-
-    # request_and_write('https://raw.githubusercontent.com/jarodschneider/evga-bot/master/evga_bot.py', '.\\evga_bot.py')
 
 def setup_bestbuy():
     def setup():
@@ -210,7 +205,6 @@ def setup_python():
     # * Install python38
     request_and_write('https://www.python.org/ftp/python/3.8.9/python-3.8.9-amd64.exe', '.\\tmp\\python38_inst.exe')
     print('Launching python installer, you will need to go through it manually')
-    # toast('Python Installation Required', 'You will need to go through the python installer to run the bot')
     time.sleep(2) #? To give people time to react
     os.system('.\\tmp\\python38_inst.exe')
 
@@ -222,7 +216,6 @@ def setup_python():
 def windows_workflow():
     create_folder("tmp")
 
-    # setup_node()
     setup_python()
     setup_webdrivers()
 
@@ -235,9 +228,6 @@ def windows_workflow():
     run_bots(True)
 
 if __name__ == '__main__':
-    # ? Handle runtime args
-    # toaster = win10toast.ToastNotifier()
-
     # ? Show startup warning
     startup_warning()
 
