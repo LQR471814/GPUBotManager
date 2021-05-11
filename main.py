@@ -3,9 +3,8 @@ import os
 import time
 import keyboard
 
-from win10toast import ToastNotifier
+# import win10toast
 
-import evga_bot
 import get_bestbuy_cookie as BBCookie
 from shared_context import *
 from utils import *
@@ -13,8 +12,8 @@ from utils import *
 amazon_repo_name = 'fairgame-master'
 bestbuy_repo_name = 'Nvidia3080_BB_bot-master'
 
-def toast(title: str, message: str):
-    toaster.show_toast(title, message, duration=10, threaded=True)
+# def toast(title: str, message: str):
+#     toaster.show_toast(title, message, duration=10, threaded=True)
 
 # ? Setup functions
 def setup_newegg():
@@ -44,7 +43,6 @@ def setup_amazon():
         os.system('py -3.8 -m pip install pipenv')
         os.system('py -3.8 -m pipenv install')
 
-        amazonConfig = json.loads(open(f'{absPath}\\amazon_config.json', 'r').read())
         amazonConfig['reserve_max_1'] = int(setup_config['price_limit'])
 
         # * Modify settings
@@ -52,7 +50,7 @@ def setup_amazon():
 
         os.rename('.\\config\\apprise.conf_template', 'apprise.conf')
 
-    run_in_context(setup, f'{absPath}\\{amazon_repo_name}')
+    run_in_context(setup, f'.\\{amazon_repo_name}')
 
 def setup_evga():
     with open('evga.key', 'w') as f: f.write(f"{setup_config['email']}\n{setup_config['password']}")
@@ -113,13 +111,11 @@ def setup_bestbuy():
 
         run_command_process('py -3.8 -m pip install -r requirements.txt')
 
-    bestbuy_links = open('bestbuy_rtx_links', 'r').read().split('\n')
-
     create_folder(bestbuy_repo_name)
     get_and_unzip('https://github.com/alexxsalazar/Nvidia3080_BB_bot/archive/refs/heads/master.zip', '.')
 
     cookie = BBCookie.main(setup_config['email'], setup_config['password'])
-    run_in_context(setup, f'{absPath}\\{bestbuy_repo_name}')
+    run_in_context(setup, f'.\\{bestbuy_repo_name}')
 
 # ? Bot functions
 def startup_warning():
@@ -130,34 +126,39 @@ def startup_warning():
 def run_bots(setup = False):
     #* Amazon
     def run_amazon():
-        amazonBotProc = run_in_context(lambda: run_command_process('py -3.8 -m pipenv run py app.py amazon', shell=False), f'{absPath}\\{amazon_repo_name}')
+        amazonBotProc = run_in_context(lambda: run_command_process("py -3.8 -m pipenv run py app.py amazon --p test_pass --headless", shell=False), f'.\\{amazon_repo_name}')
+
+        time.sleep(5)
 
         if setup:
             insert_line_to_process(amazonBotProc, setup_config['email'])
             keyboard.write(setup_config['password'] + '\n')
-            keyboard.write('test_pass\n')
+            keyboard.write('test_pass' + '\n')
+            keyboard.write('test_pass' + '\n')
 
-        keyboard.write('test_pass\n')
+        amazonBotProc
 
-    #* Newegg
-    def run_newegg():
-        run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
+    # #* Newegg
+    # def run_newegg():
+    #     run_in_context(lambda: run_command_process('node newegg_bot.js'), absPath)
 
-    #* EVGA
-    def run_evga():
-        # evgaBotProc = run_in_context(lambda: run_command_process('py -3.8 evga_bot.py', shell=False), absPath)
-        # insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
-        evga_bot.main([])
+    # #* EVGA
+    # def run_evga():
+    #     pass
+    #     # evgaBotProc = run_in_context(lambda: run_command_process('py -3.8 evga_bot.py', shell=False), absPath)
+    #     # insert_line_to_process(evgaBotProc, 'RTX 3080 FTW3 GAMING')
+    #     # evga_bot.main([])
 
     #* Best Buy
     def run_bestbuy():
-        run_in_context(lambda: run_command_process('py -3.8 app.py'), f'{absPath}\\{bestbuy_repo_name}')
+        run_in_context(lambda: run_command_process('py -3.8 app.py', shell=False), f'.\\{bestbuy_repo_name}')
 
     run_amazon()
-    time.sleep(7)
+    if setup:
+        time.sleep(10)
     run_bestbuy()
 
-    print('Press CTRL + C to stop')
+    print('Close this window to stop bots')
 
     while True: pass
 
@@ -205,9 +206,11 @@ def setup_node():
 def setup_python():
     print(" ====== Setting up Python ====== ")
 
+    print('Downloading the Python Installer...')
     # * Install python38
     request_and_write('https://www.python.org/ftp/python/3.8.9/python-3.8.9-amd64.exe', '.\\tmp\\python38_inst.exe')
-    toast('Python Installation Required', 'You will need to go through the python installer to run the bot')
+    print('Launching python installer, you will need to go through it manually')
+    # toast('Python Installation Required', 'You will need to go through the python installer to run the bot')
     time.sleep(2) #? To give people time to react
     os.system('.\\tmp\\python38_inst.exe')
 
@@ -219,27 +222,27 @@ def setup_python():
 def windows_workflow():
     create_folder("tmp")
 
-    setup_node()
+    # setup_node()
     setup_python()
     setup_webdrivers()
 
     # ? Setup bots
-    run_in_context(setup_amazon, absPath)
-    run_in_context(setup_bestbuy, absPath)
+    setup_amazon()
+    setup_bestbuy()
 
-    run_in_context(lambda: open('SETUP_FINISHED', 'w').close(), absPath)
+    open('SETUP_FINISHED', 'w').close()
 
     run_bots(True)
 
 if __name__ == '__main__':
     # ? Handle runtime args
-    toaster = ToastNotifier()
+    # toaster = win10toast.ToastNotifier()
 
     # ? Show startup warning
     startup_warning()
 
-    setup = not os.path.isfile(f'{absPath}\\SETUP_FINISHED')
-    cfg_test = os.path.isfile(f'{absPath}\\USE_TEST_CONFIG')
+    setup = not os.path.isfile(f'.\\SETUP_FINISHED')
+    cfg_test = os.path.isfile(f'.\\USE_TEST_CONFIG')
 
     # ? On setup (and not test)
     if setup and not cfg_test:

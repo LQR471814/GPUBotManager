@@ -6,6 +6,9 @@ SETUP_FINISHED
 USE_TEST_CONFIG
 Pipfile
 *.lock
+main.spec
+build
+dist
 
 # Bots
 fairgame-master
